@@ -123,7 +123,7 @@ postgresql_external_pid_file: "{{ postgresql_pid_directory }}/{{ postgresql_vers
 # - Connection Settings -
 
 postgresql_listen_addresses:
-  - "localhost"
+  - "0.0.0.0"
 postgresql_port: 5432
 
 postgresql_max_connections: 100
@@ -328,10 +328,10 @@ postgresql_recovery_target_action: "pause"         # (>= 12)
 # Set these on the primary and on any standby that will send replication data.
 # max number of walsender processes
 postgresql_max_wal_senders: 10
-postgresql_max_replication_slots: 0 # max number of replication slots
+postgresql_max_replication_slots: 1 # max number of replication slots
 postgresql_wal_sender_delay: 1s     # walsender cycle time, 1-10000 milliseconds (<= 9.1)
 postgresql_wal_keep_segments:        0   # in logfile segments, 16MB each; 0 disables
-postgresql_wal_keep_size:            0   # (>= 13)
+postgresql_wal_keep_size:            128   # (>= 13)
 postgresql_max_slot_wal_keep_size:   -1  # (>= 13)
 postgresql_replication_timeout: 60s # in milliseconds; 0 disables (<= 9.2)
 postgresql_wal_sender_timeout: 60s  # in milliseconds; 0 disables (>= 9.3)
@@ -341,16 +341,16 @@ postgresql_track_commit_timestamp: off # (>= 9.5)
 # These settings are ignored on a standby server.
 # standby servers that provide sync rep.
 # number of sync standbys (>= 9.6) and comma-separated list of application_name from standby(s)
-postgresql_synchronous_standby_names: [] # '*' means 'all'
-postgresql_synchronous_standby_num_sync: "" # >= 9.6 (NOTE: If you use the ANY/ALL syntax in v10, then note the new variable below)
+postgresql_synchronous_standby_names: ["{{ groups['psql-nodes'][1] }}"] # '*' means 'all'
+postgresql_synchronous_standby_num_sync: "1" # >= 9.6 (NOTE: If you use the ANY/ALL syntax in v10, then note the new variable below)
 postgresql_synchronous_standby_choose_sync: "FIRST" # >= 10
 # number of xacts by which cleanup is delayed
 postgresql_vacuum_defer_cleanup_age: 0 # (<= 15)
 
 # - Standby Servers -
 # These settings are ignored on a primary server.
-postgresql_primary_conninfo: ""                    # (>= 12)
-postgresql_primary_slot_name: ""                   # (>= 12)
+postgresql_primary_conninfo: "host={{ hostvars[groups['psql-nodes'][0]].internal_ip }} port=5432 application_name={{ inventory_hostname }}"                    # (>= 12)
+postgresql_primary_slot_name: "{{ inventory_hostname }}"
 postgresql_promote_trigger_file: ""                # (>= 12, <= 15)
 # "on" allows queries during recovery
 postgresql_hot_standby: on
